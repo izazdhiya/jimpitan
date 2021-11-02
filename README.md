@@ -1,6 +1,6 @@
 # jimpitan
 
-A new Flutter project.
+Aplikasi Pengelolaan Tabungan Warga Desa Gembong RT 13 RW 07
 
 ## Getting Started
 
