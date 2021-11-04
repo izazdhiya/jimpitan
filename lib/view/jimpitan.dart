@@ -14,6 +14,7 @@ class _JimpitanState extends State<Jimpitan> {
   TextEditingController _nama = TextEditingController();
   TextEditingController _jumlah = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  RegExp regx = RegExp(r"^[0-9_]*$", caseSensitive: false);
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +78,8 @@ class _JimpitanState extends State<Jimpitan> {
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Jumlah tidak boleh kosong';
+                              } else if (!(regx.hasMatch(value))) {
+                                return 'Hanya boleh angka!';
                               }
                               return null;
                             },
@@ -193,6 +196,7 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _formKey = GlobalKey<FormState>();
+    RegExp regx = RegExp(r"^[0-9_]*$", caseSensitive: false);
     TextEditingController _nama = TextEditingController();
     TextEditingController _jumlah = TextEditingController();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -280,6 +284,8 @@ class ItemCard extends StatelessWidget {
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Jumlah tidak boleh kosong';
+                                          } else if (!(regx.hasMatch(value))) {
+                                            return 'Hanya boleh angka!';
                                           }
                                           return null;
                                         },
