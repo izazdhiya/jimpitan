@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:jimpitan/view/dashboard.dart';
+// import 'package:jimpitan/view/dashboard.dart';
+import 'package:jimpitan/view/login.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
     var duration = const Duration(seconds: 5);
     return Timer(duration, () {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) {
-        return Dashboard();
+        return Login();
       }));
     });
   }
@@ -75,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           ),
                           Container(
                               child: Center(
-                                  child: Text("Gembong RT 13/ 07",
+                                  child: Text("Gembong RT 13 RW 07",
                                       style: GoogleFonts.poppins(
                                           textStyle: TextStyle(
                                               color: Color(0xFFFF5521),
