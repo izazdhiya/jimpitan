@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:jimpitan/view/tambahwarga.dart';
 
 class Warga extends StatefulWidget {
   const Warga({Key? key}) : super(key: key);
@@ -119,13 +118,32 @@ class _WargaState extends State<Warga> {
                           fontWeight: FontWeight.w500))),
             ),
             Container(
-              child: Text(
-                  "100", //+ setTotal(data, widget.index, widget.counter),
-                  style: GoogleFonts.poppins(
-                      textStyle: TextStyle(
-                          color: Color(0xFFFAFAFA),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500))),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: warga.orderBy('nama').snapshots(),
+                builder: (_, snapshot) {
+                  if (snapshot.hasData) {
+                    List myDocCount = snapshot.data!.docs;
+                    int jumlahwarga = myDocCount.length;
+                    return Text(
+                        jumlahwarga
+                            .toString(), //+ setTotal(data, widget.index, widget.counter),
+                        style: GoogleFonts.poppins(
+                            textStyle: TextStyle(
+                                color: Color(0xFFFAFAFA),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500)));
+                  } else {
+                    return Center(
+                        child: Center(
+                            child: Text('0',
+                                style: GoogleFonts.poppins(
+                                    textStyle: TextStyle(
+                                        color: Color(0xFFFAFAFA),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500)))));
+                  }
+                },
+              ),
             )
           ],
         ),
@@ -137,10 +155,6 @@ class _WargaState extends State<Warga> {
 class ItemCard extends StatelessWidget {
   final String nama;
   final e;
-  // // //// Pointer to Update Function
-  // final Function onUpdate;
-  // // //// Pointer to Delete Function
-  // final Function onDelete;
 
   ItemCard(this.nama, this.e);
 
@@ -193,6 +207,7 @@ class ItemCard extends StatelessWidget {
                       color: Colors.white,
                     )),
                     onPressed: () {
+                      _nama.text = nama;
                       showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -225,17 +240,16 @@ class ItemCard extends StatelessWidget {
                               actions: [
                                 MaterialButton(
                                     child: Text(
-                                      "Edit",
+                                      "Simpan",
                                       style:
                                           TextStyle(color: Color(0xFFFAFAFA)),
                                     ),
                                     color: Color(0xFF117B00),
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
-                                        // warga.add({
-                                        //   'nama': _nama.text,
-                                        // });
-                                        _nama.text = '';
+                                        warga.doc(e.id).update({
+                                          'nama': _nama.text,
+                                        });
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           const SnackBar(
@@ -249,42 +263,6 @@ class ItemCard extends StatelessWidget {
                               ],
                             );
                           });
-                      // showDialog(
-                      //     context: context,
-                      //     builder: (BuildContext context) {
-                      //       return AlertDialog(
-                      //         scrollable: true,
-                      //         title: Text('Edit Warga'),
-                      //         content: Padding(
-                      //           padding: const EdgeInsets.all(8.0),
-                      //           child: Form(
-                      //             child: Column(
-                      //               children: <Widget>[
-                      //                 TextFormField(
-                      //                   controller: _nama,
-                      //                   decoration: InputDecoration(
-                      //                     labelText: 'Nama Warga',
-                      //                     icon: Icon(Icons.person),
-                      //                   ),
-                      //                 ),
-                      //               ],
-                      //             ),
-                      //           ),
-                      //         ),
-                      //         actions: [
-                      //           MaterialButton(
-                      //               child: Text(
-                      //                 "Simpan",
-                      //                 style:
-                      //                     TextStyle(color: Color(0xFFFAFAFA)),
-                      //               ),
-                      //               color: Color(0xFF117B00),
-                      //               onPressed: () {
-                      //                 Navigator.of(context).pop();
-                      //               })
-                      //         ],
-                      //       );
-                      //     });
                     }),
               ),
               SizedBox(
