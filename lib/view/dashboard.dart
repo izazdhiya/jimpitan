@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:jimpitan/view/jimpitan.dart';
 import 'package:jimpitan/view/pengambilan.dart';
 import 'package:jimpitan/view/warga.dart';
@@ -12,8 +14,13 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  static var today = DateTime.now();
+  String date = '${today.day} / ${today.month} / ${today.year}';
+
   @override
   Widget build(BuildContext context) {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    CollectionReference jimpitan = firestore.collection('jimpitan');
     Size screenSize = MediaQuery.of(context).size;
     int heightSize = screenSize.height.toInt();
     int widthSize = screenSize.width.toInt();
@@ -75,14 +82,48 @@ class _DashboardState extends State<Dashboard> {
                                                     fontSize: 18,
                                                     fontWeight:
                                                         FontWeight.w500))),
-                                        Text("Rp 10.000.000",
-                                            style: GoogleFonts.poppins(
-                                                textStyle: TextStyle(
-                                                    color: Color(0xFFFAFAFA),
-                                                    fontSize: 30,
-                                                    fontWeight:
-                                                        FontWeight.w500))),
-                                        Text("20/10/2021",
+                                        StreamBuilder<QuerySnapshot>(
+                                          stream: jimpitan
+                                              .where('jumlah')
+                                              .snapshots(),
+                                          builder: (_, snapshot) {
+                                            if (snapshot.hasData) {
+                                              List myDocCount = snapshot
+                                                  .data!.docs
+                                                  .map((e) => e['jumlah'])
+                                                  .toList();
+                                              num jumlahjimpitan = 0;
+                                              for (var i in myDocCount) {
+                                                jumlahjimpitan =
+                                                    jumlahjimpitan + i;
+                                              }
+                                              return Text(
+                                                  NumberFormat.simpleCurrency(
+                                                          locale: 'id')
+                                                      .format(jumlahjimpitan),
+                                                  style: GoogleFonts.poppins(
+                                                      textStyle: TextStyle(
+                                                          color:
+                                                              Color(0xFFFAFAFA),
+                                                          fontSize: 30,
+                                                          fontWeight: FontWeight
+                                                              .w500)));
+                                            } else {
+                                              return Center(
+                                                  child: Center(
+                                                      child: Text('Rp 0',
+                                                          style: GoogleFonts.poppins(
+                                                              textStyle: TextStyle(
+                                                                  color: Color(
+                                                                      0xFFFAFAFA),
+                                                                  fontSize: 30,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500)))));
+                                            }
+                                          },
+                                        ),
+                                        Text("$date",
                                             style: GoogleFonts.poppins(
                                                 textStyle: TextStyle(
                                                     color: Color(0xFFFAFAFA),
@@ -452,7 +493,13 @@ class _DashboardState extends State<Dashboard> {
                                                             .spaceAround,
                                                     children: [
                                               RawMaterialButton(
-                                                onPressed: () {},
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              Jimpitan()));
+                                                },
                                                 child: new Icon(
                                                   Icons.money_rounded,
                                                   color: Color(0xFFFAFAFA),
@@ -689,55 +736,8 @@ class _DashboardState extends State<Dashboard> {
                                   ],
                                 ))),
                       ])))
-        //Row(
-        //   children: [
-        //     Expanded(
-        //       flex: 2,
-        //       child: LayoutBuilder(
-        //         builder: (context, constraints) => Container(
-        //           color: Color(0xFFFF5521),
-        //           child: Center(
-        //             child: Text(
-        //               'View 1\n\n' +
-        //                   '[MediaQuery]:\n ${screenSize.width.toStringAsFixed(2)}\n\n' +
-        //                   '[LayoutBuilder]:\n${constraints.maxWidth.toStringAsFixed(2)}',
-        //               style: TextStyle(color: Colors.white, fontSize: 18),
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //     Expanded(
-        //       flex: 2,
-        //       child: LayoutBuilder(
-        //         builder: (context, constraints) => Container(
-        //           color: Colors.white,
-        //           child: Center(
-        //             child: Text(
-        //               'View 2\n\n' +
-        //                   '[MediaQuery]:\n ${screenSize.width.toStringAsFixed(2)}\n\n' +
-        //                   '[LayoutBuilder]:\n${constraints.maxWidth.toStringAsFixed(2)}',
-        //               style: TextStyle(color: Color(0xFFFF5521), fontSize: 18),
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ],
-        // ),
-
-        //     Container(
-        //   color: Color(0xFFFF5521),
-        //   child: Center(
-        //     child: Text(
-        //       'View\n\n' +
-        //           '[MediaQuery width]: ${screenSize.width.toStringAsFixed(2)}\n\n' +
-        //           '[MediaQuery height]: ${screenSize.height.toStringAsFixed(2)}\n\n' +
-        //           '[MediaQuery orientation]: $orientation',
-        //       style: TextStyle(color: Colors.white, fontSize: 18),
-        //     ),
-        //   ),
-        // ),
+        
+        
         );
   }
 }
