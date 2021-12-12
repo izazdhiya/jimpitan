@@ -16,10 +16,16 @@ class _JimpitanState extends State<Jimpitan> {
   final _formKey = GlobalKey<FormState>();
   RegExp regx = RegExp(r"^[0-9_]*$", caseSensitive: false);
 
+  List item = [];
+  List<String> namawarga = [];
+  var date1 = DateFormat.yMMMd().format(DateTime.now());
+
   @override
   Widget build(BuildContext context) {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference jimpitan = firestore.collection('jimpitan');
+    CollectionReference warga = firestore.collection('warga');
+
     return Scaffold(
       appBar: AppBar(
           title: Text("Jimpitan Hari Ini",
@@ -29,15 +35,19 @@ class _JimpitanState extends State<Jimpitan> {
           backgroundColor: Color(0xFFFF5521)),
       body: ListView(children: [
         StreamBuilder<QuerySnapshot>(
-          stream: jimpitan
-              .where('tanggal',
-                  isGreaterThan: DateTime.now().subtract(Duration(days: 1)))
-              .orderBy('tanggal', descending: true)
-              .snapshots(),
+          stream: jimpitan.orderBy('tanggal', descending: true).snapshots(),
           builder: (_, snapshot) {
             if (snapshot.hasData) {
+              var list = snapshot.data!.docs;
+              var toRemove = [];
+              list.forEach((e) {
+                if (DateFormat.yMMMd().format(e['tanggal'].toDate()) != date1) {
+                  toRemove.add(e);
+                }
+              });
+              list.removeWhere((e) => toRemove.contains(e));
               return Column(
-                children: snapshot.data!.docs
+                children: list
                     .map((e) => ItemCard(e['nama'], e['jumlah'], e))
                     .toList(),
               );
@@ -45,7 +55,29 @@ class _JimpitanState extends State<Jimpitan> {
               return Center(child: Center(child: Text('Loading')));
             }
           },
-        )
+        ),
+
+        // FutureBuilder<QuerySnapshot>(
+        //   future: jimpitan.orderBy('tanggal', descending: true).get(),
+        //   builder: (_, snapshot) {
+        //     data = [];
+        //     if (snapshot.hasData) {
+        //       List myDocCount = snapshot.data!.docs
+        //           .map((e) => [e['nama'], e['jumlah'], e['tanggal'], e])
+        //           .toList();
+        //       for (var i in myDocCount) {
+        //         if (DateFormat.yMMMd().format(i[2].toDate()) == date1) {
+        //           data.add([i[0], i[1], i[3]]);
+        //         }
+        //       }
+        //       return Container();
+        //     } else {
+        //       return Container();
+        //     }
+        //   },
+        // ),
+        // for (var i = 0; i < data.length; i++)
+        //   ItemCard(data[i][0], data[i][1], data[i][2])
       ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -61,7 +93,24 @@ class _JimpitanState extends State<Jimpitan> {
                       key: _formKey,
                       child: Column(
                         children: <Widget>[
+                          FutureBuilder<QuerySnapshot>(
+                            future: warga.orderBy('nama').get(),
+                            builder: (_, snapshot) {
+                              if (snapshot.hasData) {
+                                item.add(snapshot.data!.docs
+                                    .map((e) => [e['nama']])
+                                    .toList());
+                                for (var i = 0; i < item[0].length; i++) {
+                                  namawarga.add(item[0][i][0]);
+                                }
+                                return Container();
+                              } else {
+                                return Container();
+                              }
+                            },
+                          ),
                           TextFormField(
+                            readOnly: true,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Nama tidak boleh kosong';
@@ -70,8 +119,21 @@ class _JimpitanState extends State<Jimpitan> {
                             },
                             controller: _nama,
                             decoration: InputDecoration(
-                              labelText: 'Nama Warga',
+                              labelText: "Nama Warga",
                               icon: Icon(Icons.person),
+                              suffixIcon: PopupMenuButton<String>(
+                                icon: const Icon(Icons.arrow_drop_down),
+                                onSelected: (String value) {
+                                  _nama.text = value;
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return namawarga.map<PopupMenuItem<String>>(
+                                      (String value) {
+                                    return new PopupMenuItem(
+                                        child: new Text(value), value: value);
+                                  }).toList();
+                                },
+                              ),
                             ),
                           ),
                           TextFormField(
@@ -96,6 +158,16 @@ class _JimpitanState extends State<Jimpitan> {
                   ),
                   actions: [
                     MaterialButton(
+                      color: Color(0xFFC4C4C4),
+                      child: Text("Batal"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        item = [];
+                        namawarga = [];
+                        print(item);
+                      },
+                    ),
+                    MaterialButton(
                         child: Text(
                           "Tambah",
                           style: TextStyle(color: Color(0xFFFAFAFA)),
@@ -114,7 +186,8 @@ class _JimpitanState extends State<Jimpitan> {
                               const SnackBar(
                                   content: Text('Data berhasil disimpan!')),
                             );
-
+                            item = [];
+                            namawarga = [];
                             Navigator.of(context).pop();
                           }
                         })
@@ -145,15 +218,19 @@ class _JimpitanState extends State<Jimpitan> {
             ),
             Container(
               child: StreamBuilder<QuerySnapshot>(
-                stream: jimpitan
-                    .where('tanggal',
-                        isGreaterThan:
-                            DateTime.now().subtract(Duration(days: 1)))
-                    .snapshots(),
+                stream: jimpitan.snapshots(),
                 builder: (_, snapshot) {
                   if (snapshot.hasData) {
-                    List myDocCount =
-                        snapshot.data!.docs.map((e) => e['jumlah']).toList();
+                    var list = snapshot.data!.docs;
+                    var toRemove = [];
+                    list.forEach((e) {
+                      if (DateFormat.yMMMd().format(e['tanggal'].toDate()) !=
+                          date1) {
+                        toRemove.add(e);
+                      }
+                    });
+                    list.removeWhere((e) => toRemove.contains(e));
+                    List myDocCount = list.map((e) => e['jumlah']).toList();
                     num jumlahjimpitan = 0;
                     for (var i in myDocCount) {
                       jumlahjimpitan = jumlahjimpitan + i;
@@ -169,7 +246,9 @@ class _JimpitanState extends State<Jimpitan> {
                   } else {
                     return Center(
                         child: Center(
-                            child: Text('Rp 0',
+                            child: Text(
+                                NumberFormat.simpleCurrency(locale: 'id')
+                                    .format(0),
                                 style: GoogleFonts.poppins(
                                     textStyle: TextStyle(
                                         color: Color(0xFFFAFAFA),
@@ -201,6 +280,10 @@ class ItemCard extends StatelessWidget {
     TextEditingController _jumlah = TextEditingController();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference jimpitan = firestore.collection('jimpitan');
+    CollectionReference warga = firestore.collection('warga');
+
+    List item = [];
+    List<String> namawarga = [];
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(left: 15, top: 5, right: 15, bottom: 5),
@@ -267,7 +350,26 @@ class ItemCard extends StatelessWidget {
                                   key: _formKey,
                                   child: Column(
                                     children: <Widget>[
+                                      FutureBuilder<QuerySnapshot>(
+                                        future: warga.orderBy('nama').get(),
+                                        builder: (_, snapshot) {
+                                          if (snapshot.hasData) {
+                                            item.add(snapshot.data!.docs
+                                                .map((e) => [e['nama']])
+                                                .toList());
+                                            for (var i = 0;
+                                                i < item[0].length;
+                                                i++) {
+                                              namawarga.add(item[0][i][0]);
+                                            }
+                                            return Container();
+                                          } else {
+                                            return Container();
+                                          }
+                                        },
+                                      ),
                                       TextFormField(
+                                        readOnly: true,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Nama tidak boleh kosong';
@@ -276,8 +378,25 @@ class ItemCard extends StatelessWidget {
                                         },
                                         controller: _nama,
                                         decoration: InputDecoration(
-                                          labelText: 'Nama Warga',
+                                          labelText: "Nama Warga",
                                           icon: Icon(Icons.person),
+                                          suffixIcon: PopupMenuButton<String>(
+                                            icon: const Icon(
+                                                Icons.arrow_drop_down),
+                                            onSelected: (String value) {
+                                              _nama.text = value;
+                                            },
+                                            itemBuilder:
+                                                (BuildContext context) {
+                                              return namawarga
+                                                  .map<PopupMenuItem<String>>(
+                                                      (String value) {
+                                                return new PopupMenuItem(
+                                                    child: new Text(value),
+                                                    value: value);
+                                              }).toList();
+                                            },
+                                          ),
                                         ),
                                       ),
                                       TextFormField(
@@ -301,6 +420,13 @@ class ItemCard extends StatelessWidget {
                                 ),
                               ),
                               actions: [
+                                MaterialButton(
+                                  color: Color(0xFFC4C4C4),
+                                  child: Text("Batal"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
                                 MaterialButton(
                                     child: Text(
                                       "Simpan",
@@ -345,6 +471,13 @@ class ItemCard extends StatelessWidget {
                         title: Text("Konfirmasi"),
                         content: Text("Yakin ingin menghapus data?"),
                         actions: [
+                          MaterialButton(
+                            color: Color(0xFFC4C4C4),
+                            child: Text("TIDAK"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
                           MaterialButton(
                             color: Color(0xFFDF0000),
                             child: Text("YA",
