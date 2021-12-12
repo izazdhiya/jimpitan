@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:jimpitan/view/dashboard.dart';
+import 'package:jimpitan/view/dashboard.dart';
 import 'package:jimpitan/view/login.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,23 +13,31 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  List list = [];
   @override
   void initState() {
     super.initState();
     startSplashScreen();
   }
 
-  startSplashScreen() async {
+  startSplashScreen() {
+    // var data = await FirebaseFirestore.instance.collection('login').get();
     var duration = const Duration(seconds: 5);
     return Timer(duration, () {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) {
-        return Login();
+        if (list.length == 0) {
+          return Login();
+        } else {
+          return Dashboard();
+        }
       }));
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    CollectionReference login = firestore.collection('login');
     Size screenSize = MediaQuery.of(context).size;
     int heightSize = screenSize.height.toInt();
     int widthSize = screenSize.width.toInt();
@@ -81,7 +90,21 @@ class _SplashScreenState extends State<SplashScreen> {
                                           textStyle: TextStyle(
                                               color: Color(0xFFFF5521),
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w500)))))
+                                              fontWeight: FontWeight.w500))))),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: login.snapshots(),
+                            builder: (_, snapshot) {
+                              list = [];
+                              if (snapshot.hasData) {
+                                list = snapshot.data!.docs
+                                    .map((e) => [e['info'], e])
+                                    .toList();
+                                return Container();
+                              } else {
+                                return Container();
+                              }
+                            },
+                          )
                         ],
                       )
                     :
@@ -129,7 +152,21 @@ class _SplashScreenState extends State<SplashScreen> {
                                           textStyle: TextStyle(
                                               color: Color(0xFFFF5521),
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w500)))))
+                                              fontWeight: FontWeight.w500))))),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: login.snapshots(),
+                            builder: (_, snapshot) {
+                              list = [];
+                              if (snapshot.hasData) {
+                                list = snapshot.data!.docs
+                                    .map((e) => [e['info'], e])
+                                    .toList();
+                                return Container();
+                              } else {
+                                return Container();
+                              }
+                            },
+                          )
                         ],
                       ))));
   }
