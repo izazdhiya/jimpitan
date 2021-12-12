@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:jimpitan/view/detailpengambilan.dart';
+import 'package:jimpitan/view/riwayat.dart';
 
 class Pengambilan extends StatefulWidget {
   const Pengambilan({Key? key}) : super(key: key);
@@ -12,7 +13,7 @@ class Pengambilan extends StatefulWidget {
 }
 
 class _PengambilanState extends State<Pengambilan> {
-  TextEditingController _search = TextEditingController();
+  // TextEditingController _search = TextEditingController();
 
   // @override
   // void initState() {
@@ -28,7 +29,7 @@ class _PengambilanState extends State<Pengambilan> {
   // }
 
   // onSearchChanged() {
-  //   print(_search);
+  //   print(_search.text);
   // }
 
   @override
@@ -45,35 +46,50 @@ class _PengambilanState extends State<Pengambilan> {
                 style: GoogleFonts.poppins(
                     textStyle:
                         TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
+            actions: <Widget>[
+              Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.layers,
+                      color: Color(0xFFFAFAFA),
+                    ),
+                    tooltip: 'Riwayat Pengambilan',
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => RiwayatPengambilan()));
+                    },
+                  ))
+            ],
             backgroundColor: Color(0xFFFF5521)),
         body: LayoutBuilder(
             builder: (context, index) => Container(
                     child: Column(
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(15),
-                      child: TextField(
-                        controller: _search,
-                        decoration: InputDecoration(
-                          filled: true,
-                          hintText: "Masukkan nama warga...",
-                          suffixIcon: IconButton(
-                              onPressed: () {}, icon: Icon(Icons.search)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Container(
+                    //   padding: EdgeInsets.all(15),
+                    //   child: TextField(
+                    //     controller: _search,
+                    //     decoration: InputDecoration(
+                    //       filled: true,
+                    //       hintText: "Masukkan nama warga...",
+                    //       suffixIcon: IconButton(
+                    //           onPressed: () {}, icon: Icon(Icons.search)),
+                    //       border: OutlineInputBorder(
+                    //         borderRadius: BorderRadius.all(Radius.circular(10)),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                     Expanded(
                       child: ListView(children: [
                         StreamBuilder<QuerySnapshot>(
-                          stream: //filter.isEmpty?
-                              warga.orderBy('nama').snapshots(),
-                          // : warga
-                          //     .where('nama', isEqualTo: filter)
-                          //     .orderBy('nama')
-                          //     .snapshots(),
+                          stream: warga
+                              // .where('nama', arrayContains: _search.text)
+                              .orderBy('nama')
+                              .snapshots(),
                           builder: (_, snapshot) {
                             if (snapshot.hasData) {
                               return Column(
@@ -115,7 +131,7 @@ class ItemCard extends StatelessWidget {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => DetailPengambilan(nama: nama)));
+                    builder: (context) => DetailPengambilan(nama: nama, e: e)));
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,6 +171,11 @@ class ItemCard extends StatelessWidget {
                   },
                 ),
               ),
+              // Text(NumberFormat.simpleCurrency(locale: 'id').format(jumlah),
+              //     style: GoogleFonts.poppins(
+              //         color: Color(0xFF348A36),
+              //         fontWeight: FontWeight.w500,
+              //         fontSize: 16)),
             ],
           ),
         ));
