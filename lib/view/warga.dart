@@ -10,8 +10,12 @@ class Warga extends StatefulWidget {
 }
 
 class _WargaState extends State<Warga> {
+  List list = [];
+  bool data = true;
   TextEditingController _nama = TextEditingController();
+  // TextEditingController _norumah = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  // RegExp regx = RegExp(r"^[0-9_]*$", caseSensitive: false);
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +33,8 @@ class _WargaState extends State<Warga> {
           stream: warga.orderBy('nama').snapshots(),
           builder: (_, snapshot) {
             if (snapshot.hasData) {
+              list = [];
+              list.add(snapshot.data!.docs.map((e) => e['nama']).toList());
               return Column(
                 children: snapshot.data!.docs
                     .map((e) => ItemCard(e['nama'], e))
@@ -54,12 +60,32 @@ class _WargaState extends State<Warga> {
                       key: _formKey,
                       child: Column(
                         children: <Widget>[
+                          // TextFormField(
+                          //   validator: (value) {
+                          //     if (value == null || value.isEmpty) {
+                          //       return 'Jumlah tidak boleh kosong';
+                          //     } else if (!(regx.hasMatch(value))) {
+                          //       return 'Hanya boleh angka!';
+                          //     }
+                          //     return null;
+                          //   },
+                          //   controller: _norumah,
+                          //   decoration: InputDecoration(
+                          //     labelText: 'Nomor Rumah',
+                          //     icon: Icon(Icons.home),
+                          //   ),
+                          //   keyboardType: TextInputType.number,
+                          // ),
                           TextFormField(
                             validator: (value) {
+                              // for (var i = 0; i < list.length; i++) {
                               if (value == null || value.isEmpty) {
                                 return 'Nama tidak boleh kosong';
+                              } else if (data == false) {
+                                return 'Nama sudah ada';
                               }
                               return null;
+                              // }
                             },
                             controller: _nama,
                             decoration: InputDecoration(
@@ -73,22 +99,40 @@ class _WargaState extends State<Warga> {
                   ),
                   actions: [
                     MaterialButton(
+                      color: Color(0xFFC4C4C4),
+                      child: Text("Batal"),
+                      onPressed: () {
+                        data = true;
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    MaterialButton(
                         child: Text(
                           "Tambah",
                           style: TextStyle(color: Color(0xFFFAFAFA)),
                         ),
                         color: Color(0xFF0043A7),
                         onPressed: () {
+                          for (var i = 0; i < list[0].length; i++) {
+                            if (_nama.text == list[0][i].toString()) {
+                              data = false;
+                              break;
+                            } else {
+                              data = true;
+                            }
+                          }
                           if (_formKey.currentState!.validate()) {
                             warga.add({
+                              // 'norumah': _norumah.text,
                               'nama': _nama.text,
                             });
+                            // _norumah.text = '';
                             _nama.text = '';
+
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content: Text('Data berhasil disimpan!')),
                             );
-
                             Navigator.of(context).pop();
                           }
                         })
@@ -160,10 +204,13 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List list = [];
+    bool data = true;
     final _formKey = GlobalKey<FormState>();
     TextEditingController _nama = TextEditingController();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference warga = firestore.collection('warga');
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(left: 15, top: 5, right: 15, bottom: 5),
@@ -185,6 +232,19 @@ class ItemCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              StreamBuilder<QuerySnapshot>(
+                stream: warga.orderBy('nama').snapshots(),
+                builder: (_, snapshot) {
+                  if (snapshot.hasData) {
+                    list = [];
+                    list.add(
+                        snapshot.data!.docs.map((e) => e['nama']).toList());
+                    return Container();
+                  } else {
+                    return Container();
+                  }
+                },
+              ),
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.5,
                 child: Text(nama,
@@ -224,6 +284,8 @@ class ItemCard extends StatelessWidget {
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
                                             return 'Nama tidak boleh kosong';
+                                          } else if (data == false) {
+                                            return 'Nama sudah ada';
                                           }
                                           return null;
                                         },
@@ -239,6 +301,13 @@ class ItemCard extends StatelessWidget {
                               ),
                               actions: [
                                 MaterialButton(
+                                  color: Color(0xFFC4C4C4),
+                                  child: Text("Batal"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                MaterialButton(
                                     child: Text(
                                       "Simpan",
                                       style:
@@ -246,6 +315,16 @@ class ItemCard extends StatelessWidget {
                                     ),
                                     color: Color(0xFF117B00),
                                     onPressed: () {
+                                      print(list);
+                                      for (var i = 0; i < list[0].length; i++) {
+                                        if (_nama.text ==
+                                            list[0][i].toString()) {
+                                          data = false;
+                                          break;
+                                        } else {
+                                          data = true;
+                                        }
+                                      }
                                       if (_formKey.currentState!.validate()) {
                                         warga.doc(e.id).update({
                                           'nama': _nama.text,
@@ -281,6 +360,13 @@ class ItemCard extends StatelessWidget {
                         title: Text("Konfirmasi"),
                         content: Text("Yakin ingin menghapus data?"),
                         actions: [
+                          MaterialButton(
+                            color: Color(0xFFC4C4C4),
+                            child: Text("TIDAK"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
                           MaterialButton(
                             color: Color(0xFFDF0000),
                             child: Text("YA",
