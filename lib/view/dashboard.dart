@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:jimpitan/services/auth_services.dart';
 import 'package:jimpitan/view/jimpitan.dart';
 import 'package:jimpitan/view/pengambilan.dart';
+import 'package:jimpitan/view/selengkapnya.dart';
+import 'package:jimpitan/view/splashscreen.dart';
 import 'package:jimpitan/view/warga.dart';
 
 class Dashboard extends StatefulWidget {
@@ -16,11 +19,14 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   static var today = DateTime.now();
   String date = '${today.day} / ${today.month} / ${today.year}';
+  final AuthServices _auth = AuthServices();
+  List list = [];
 
   @override
   Widget build(BuildContext context) {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference jimpitan = firestore.collection('jimpitan');
+    CollectionReference login = firestore.collection('login');
     Size screenSize = MediaQuery.of(context).size;
     int heightSize = screenSize.height.toInt();
     int widthSize = screenSize.width.toInt();
@@ -37,7 +43,7 @@ class _DashboardState extends State<Dashboard> {
                             child: Container(
                               margin: EdgeInsets.only(
                                   left: 15, top: 30, right: 15, bottom: 5),
-                              padding: EdgeInsets.all(10),
+                              padding: EdgeInsets.only(left: 10, right: 10),
                               decoration: BoxDecoration(
                                 color: Color(0xFFFF5521),
                                 borderRadius: BorderRadius.circular(10),
@@ -63,15 +69,59 @@ class _DashboardState extends State<Dashboard> {
                                                     fontSize: 12,
                                                     fontWeight:
                                                         FontWeight.w500))),
-                                        Icon(
-                                          Icons.menu,
-                                          color: Color(0xFFFAFAFA),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.logout,
+                                            color: Color(0xFFFAFAFA),
+                                          ),
+                                          tooltip: 'Logout',
+                                          onPressed: () {
+                                            AlertDialog alert = AlertDialog(
+                                              title: Text("Konfirmasi"),
+                                              content:
+                                                  Text("Yakin Ingin Keluar?"),
+                                              actions: [
+                                                MaterialButton(
+                                                  color: Color(0xFFC4C4C4),
+                                                  child: Text("BATAL"),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                MaterialButton(
+                                                  color: Color(0xFFDF0000),
+                                                  child: Text("YA",
+                                                      style: TextStyle(
+                                                        color:
+                                                            Color(0xFFFAFAFA),
+                                                      )),
+                                                  onPressed: () async {
+                                                    login
+                                                        .doc(list[0][1].id)
+                                                        .delete();
+                                                    await _auth.signOut();
+                                                    Navigator.pushReplacement(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                SplashScreen()));
+                                                  },
+                                                )
+                                              ],
+                                            );
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return alert;
+                                              },
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
                                   ),
                                   Container(
-                                    margin: EdgeInsets.only(top: 10),
+                                    margin: EdgeInsets.only(top: 5),
                                     child: Center(
                                         child: Column(
                                       children: [
@@ -129,7 +179,21 @@ class _DashboardState extends State<Dashboard> {
                                                     color: Color(0xFFFAFAFA),
                                                     fontSize: 12,
                                                     fontWeight:
-                                                        FontWeight.w500)))
+                                                        FontWeight.w500))),
+                                        StreamBuilder<QuerySnapshot>(
+                                          stream: login.snapshots(),
+                                          builder: (_, snapshot) {
+                                            list = [];
+                                            if (snapshot.hasData) {
+                                              list = snapshot.data!.docs
+                                                  .map((e) => [e['info'], e])
+                                                  .toList();
+                                              return Container();
+                                            } else {
+                                              return Container();
+                                            }
+                                          },
+                                        )
                                       ],
                                     )),
                                   )
@@ -264,7 +328,13 @@ class _DashboardState extends State<Dashboard> {
                                                       fontWeight:
                                                           FontWeight.w500))),
                                           TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            Selengkapnya()));
+                                              },
                                               child: Text("Selengkapnya >",
                                                   style: GoogleFonts.poppins(
                                                       textStyle: TextStyle(
@@ -316,7 +386,13 @@ class _DashboardState extends State<Dashboard> {
                                                         ),
                                                         child: Center(
                                                           child: Text(
-                                                              "19/10/2021",
+                                                              DateFormat.yMMMd()
+                                                                  .format(DateTime
+                                                                          .now()
+                                                                      .subtract(Duration(
+                                                                          days:
+                                                                              i)))
+                                                                  .toString(),
                                                               style: GoogleFonts.poppins(
                                                                   textStyle: TextStyle(
                                                                       fontSize:
@@ -358,15 +434,70 @@ class _DashboardState extends State<Dashboard> {
                                                                               14,
                                                                           fontWeight:
                                                                               FontWeight.w500))),
-                                                              Text("Rp 200.000",
-                                                                  style: GoogleFonts.poppins(
-                                                                      textStyle: TextStyle(
-                                                                          color: Color(
-                                                                              0xFF348A36),
-                                                                          fontSize:
-                                                                              14,
-                                                                          fontWeight:
-                                                                              FontWeight.w500)))
+                                                              StreamBuilder<
+                                                                  QuerySnapshot>(
+                                                                stream: jimpitan
+                                                                    .snapshots(),
+                                                                builder: (_,
+                                                                    snapshot) {
+                                                                  if (snapshot
+                                                                      .hasData) {
+                                                                    var list =
+                                                                        snapshot
+                                                                            .data!
+                                                                            .docs;
+                                                                    var toRemove =
+                                                                        [];
+                                                                    list.forEach(
+                                                                        (e) {
+                                                                      if (DateFormat.yMMMd().format(e['tanggal']
+                                                                              .toDate()) !=
+                                                                          DateFormat.yMMMd()
+                                                                              .format(DateTime.now().subtract(Duration(days: i)))) {
+                                                                        toRemove
+                                                                            .add(e);
+                                                                      }
+                                                                    });
+                                                                    list.removeWhere((e) =>
+                                                                        toRemove
+                                                                            .contains(e));
+                                                                    List myDocCount = list
+                                                                        .map((e) =>
+                                                                            e['jumlah'])
+                                                                        .toList();
+                                                                    num jumlahjimpitan =
+                                                                        0;
+                                                                    for (var i
+                                                                        in myDocCount) {
+                                                                      jumlahjimpitan =
+                                                                          jumlahjimpitan +
+                                                                              i;
+                                                                    }
+                                                                    return Text(
+                                                                        NumberFormat.simpleCurrency(locale: 'id').format(
+                                                                            jumlahjimpitan),
+                                                                        style: GoogleFonts.poppins(
+                                                                            textStyle: TextStyle(
+                                                                                color: Color(0xFF348A36),
+                                                                                fontSize: 14,
+                                                                                fontWeight: FontWeight.w500)));
+                                                                  } else {
+                                                                    return Center(
+                                                                        child: Center(
+                                                                            child:
+                                                                                Text(NumberFormat.simpleCurrency(locale: 'id').format(0), style: GoogleFonts.poppins(textStyle: TextStyle(color: Color(0xFF348A36), fontSize: 14, fontWeight: FontWeight.w500)))));
+                                                                  }
+                                                                },
+                                                              ),
+                                                              // Text("Rp 200.000",
+                                                              //     style: GoogleFonts.poppins(
+                                                              //         textStyle: TextStyle(
+                                                              //             color: Color(
+                                                              //                 0xFF348A36),
+                                                              //             fontSize:
+                                                              //                 14,
+                                                              //             fontWeight:
+                                                              //                 FontWeight.w500)))
                                                             ]),
                                                       )),
                                                 ],
@@ -406,7 +537,7 @@ class _DashboardState extends State<Dashboard> {
                                 child: Container(
                                   margin: EdgeInsets.only(
                                       left: 10, top: 20, right: 10, bottom: 5),
-                                  padding: EdgeInsets.all(10),
+                                  padding: EdgeInsets.only(left: 10, right: 10),
                                   decoration: BoxDecoration(
                                     color: Color(0xFFFF5521),
                                     borderRadius: BorderRadius.circular(10),
@@ -433,15 +564,62 @@ class _DashboardState extends State<Dashboard> {
                                                         fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.w500))),
-                                            Icon(
-                                              Icons.menu,
-                                              color: Color(0xFFFAFAFA),
+                                            IconButton(
+                                              icon: Icon(
+                                                Icons.logout,
+                                                color: Color(0xFFFAFAFA),
+                                              ),
+                                              tooltip: 'Logout',
+                                              onPressed: () {
+                                                AlertDialog alert = AlertDialog(
+                                                  title: Text("Konfirmasi"),
+                                                  content: Text(
+                                                      "Yakin Ingin Keluar?"),
+                                                  actions: [
+                                                    MaterialButton(
+                                                      color: Color(0xFFC4C4C4),
+                                                      child: Text("BATAL"),
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                    ),
+                                                    MaterialButton(
+                                                      color: Color(0xFFDF0000),
+                                                      child: Text("YA",
+                                                          style: TextStyle(
+                                                            color: Color(
+                                                                0xFFFAFAFA),
+                                                          )),
+                                                      onPressed: () async {
+                                                        login
+                                                            .doc(list[0][1].id)
+                                                            .delete();
+                                                        await _auth.signOut();
+                                                        Navigator.pushReplacement(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        SplashScreen()));
+                                                      },
+                                                    )
+                                                  ],
+                                                );
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return alert;
+                                                  },
+                                                );
+                                              },
                                             ),
                                           ],
                                         ),
                                       ),
                                       Container(
-                                        margin: EdgeInsets.only(top: 10),
+                                        margin: EdgeInsets.only(top: 5),
                                         child: Center(
                                             child: Column(
                                           children: [
@@ -453,22 +631,74 @@ class _DashboardState extends State<Dashboard> {
                                                         fontSize: 18,
                                                         fontWeight:
                                                             FontWeight.w500))),
-                                            Text("Rp 10.000.000",
-                                                style: GoogleFonts.poppins(
-                                                    textStyle: TextStyle(
-                                                        color:
-                                                            Color(0xFFFAFAFA),
-                                                        fontSize: 30,
-                                                        fontWeight:
-                                                            FontWeight.w500))),
-                                            Text("20/10/2021",
+                                            StreamBuilder<QuerySnapshot>(
+                                              stream: jimpitan
+                                                  .where('jumlah')
+                                                  .snapshots(),
+                                              builder: (_, snapshot) {
+                                                if (snapshot.hasData) {
+                                                  List myDocCount = snapshot
+                                                      .data!.docs
+                                                      .map((e) => e['jumlah'])
+                                                      .toList();
+                                                  num jumlahjimpitan = 0;
+                                                  for (var i in myDocCount) {
+                                                    jumlahjimpitan =
+                                                        jumlahjimpitan + i;
+                                                  }
+                                                  return Text(
+                                                      NumberFormat
+                                                              .simpleCurrency(
+                                                                  locale: 'id')
+                                                          .format(
+                                                              jumlahjimpitan),
+                                                      style: GoogleFonts.poppins(
+                                                          textStyle: TextStyle(
+                                                              color: Color(
+                                                                  0xFFFAFAFA),
+                                                              fontSize: 30,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500)));
+                                                } else {
+                                                  return Center(
+                                                      child: Center(
+                                                          child: Text('Rp 0',
+                                                              style: GoogleFonts.poppins(
+                                                                  textStyle: TextStyle(
+                                                                      color: Color(
+                                                                          0xFFFAFAFA),
+                                                                      fontSize:
+                                                                          30,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500)))));
+                                                }
+                                              },
+                                            ),
+                                            Text("$date",
                                                 style: GoogleFonts.poppins(
                                                     textStyle: TextStyle(
                                                         color:
                                                             Color(0xFFFAFAFA),
                                                         fontSize: 12,
                                                         fontWeight:
-                                                            FontWeight.w500)))
+                                                            FontWeight.w500))),
+                                            StreamBuilder<QuerySnapshot>(
+                                              stream: login.snapshots(),
+                                              builder: (_, snapshot) {
+                                                list = [];
+                                                if (snapshot.hasData) {
+                                                  list = snapshot.data!.docs
+                                                      .map(
+                                                          (e) => [e['info'], e])
+                                                      .toList();
+                                                  return Container();
+                                                } else {
+                                                  return Container();
+                                                }
+                                              },
+                                            )
                                           ],
                                         )),
                                       )
@@ -627,7 +857,13 @@ class _DashboardState extends State<Dashboard> {
                                                     fontWeight:
                                                         FontWeight.w500))),
                                         TextButton(
-                                            onPressed: () {},
+                                            onPressed: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          Selengkapnya()));
+                                            },
                                             child: Text("Selengkapnya >",
                                                 style: GoogleFonts.poppins(
                                                     textStyle: TextStyle(
@@ -678,7 +914,14 @@ class _DashboardState extends State<Dashboard> {
                                                       ),
                                                       child: Center(
                                                         child: Text(
-                                                            "19/10/2021",
+                                                            DateFormat.yMMMd()
+                                                                .format(DateTime
+                                                                        .now()
+                                                                    .subtract(
+                                                                        Duration(
+                                                                            days:
+                                                                                i)))
+                                                                .toString(),
                                                             style: GoogleFonts.poppins(
                                                                 textStyle: TextStyle(
                                                                     fontSize:
@@ -717,15 +960,68 @@ class _DashboardState extends State<Dashboard> {
                                                                             14,
                                                                         fontWeight:
                                                                             FontWeight.w500))),
-                                                            Text("Rp 200.000",
-                                                                style: GoogleFonts.poppins(
-                                                                    textStyle: TextStyle(
-                                                                        color: Color(
-                                                                            0xFF348A36),
-                                                                        fontSize:
-                                                                            14,
-                                                                        fontWeight:
-                                                                            FontWeight.w500)))
+                                                            StreamBuilder<
+                                                                QuerySnapshot>(
+                                                              stream: jimpitan
+                                                                  .snapshots(),
+                                                              builder: (_,
+                                                                  snapshot) {
+                                                                if (snapshot
+                                                                    .hasData) {
+                                                                  var list =
+                                                                      snapshot
+                                                                          .data!
+                                                                          .docs;
+                                                                  var toRemove =
+                                                                      [];
+                                                                  list.forEach(
+                                                                      (e) {
+                                                                    if (DateFormat.yMMMd().format(e['tanggal']
+                                                                            .toDate()) !=
+                                                                        DateFormat.yMMMd().format(DateTime.now().subtract(Duration(
+                                                                            days:
+                                                                                i)))) {
+                                                                      toRemove
+                                                                          .add(
+                                                                              e);
+                                                                    }
+                                                                  });
+                                                                  list.removeWhere(
+                                                                      (e) => toRemove
+                                                                          .contains(
+                                                                              e));
+                                                                  List myDocCount = list
+                                                                      .map((e) =>
+                                                                          e['jumlah'])
+                                                                      .toList();
+                                                                  num jumlahjimpitan =
+                                                                      0;
+                                                                  for (var i
+                                                                      in myDocCount) {
+                                                                    jumlahjimpitan =
+                                                                        jumlahjimpitan +
+                                                                            i;
+                                                                  }
+                                                                  return Text(
+                                                                      NumberFormat.simpleCurrency(
+                                                                              locale:
+                                                                                  'id')
+                                                                          .format(
+                                                                              jumlahjimpitan),
+                                                                      style: GoogleFonts.poppins(
+                                                                          textStyle: TextStyle(
+                                                                              color: Color(0xFF348A36),
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w500)));
+                                                                } else {
+                                                                  return Center(
+                                                                      child: Center(
+                                                                          child: Text(
+                                                                              NumberFormat.simpleCurrency(locale: 'id').format(0),
+                                                                              style: GoogleFonts.poppins(textStyle: TextStyle(color: Color(0xFF348A36), fontSize: 14, fontWeight: FontWeight.w500)))));
+                                                                }
+                                                              },
+                                                            ),
                                                           ]),
                                                     )),
                                               ],
@@ -735,9 +1031,6 @@ class _DashboardState extends State<Dashboard> {
                                     )
                                   ],
                                 ))),
-                      ])))
-        
-        
-        );
+                      ]))));
   }
 }
