@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "388026399538",
+    "project_id": "pemrograman-mobile-2c14c",
+    "storage_bucket": "pemrograman-mobile-2c14c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388026399538:android:230fa3b426186eab37752b",
+        "android_client_info": {
+          "package_name": "com.example.jimpitan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "388026399538-kghedh7p4tu97lv683ts1gpsh93ghqju.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-WjS2Su9mNJ-2TnCna76c702xKMWMzJo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "388026399538-kghedh7p4tu97lv683ts1gpsh93ghqju.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
