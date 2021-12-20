@@ -1,16 +1,8 @@
 # jimpitan
 
-A new Flutter project.
+Aplikasi Pengelolaan Tabungan Warga Desa Gembong RT 13 RW 07
 
-## Getting Started
+## Contributors
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+ - [I'zaz Dhiya 'Ulhaq](http://github.com/izazdhiya) | NIM 192410102033
+ - [Zein Salman Saifulloh](http://github.com/zeeslmn) | NIM 192410102074
